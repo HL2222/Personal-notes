@@ -1,0 +1,74 @@
+﻿
+Github基本名词解释
+
+	学习github目的：借助github托管项目代码
+	
+	仓库（Repository）
+		：一个开源项目对应一个仓库
+	收藏（Star）
+		：收藏别人的项目，可以从“个人中心”直接进入那个项目
+	复制克隆项目（Fork）
+		：克隆别人一份项目代码为自己的一个项目，可以修改之后通过Pull request让原作者采用自己的更新
+	发起请求（Pull request）
+		：通过Pull request让原作者决定是否合并自己的代码
+	关注（Watch）
+		：关注别人一个项目后，对方更新后，自己这边会有提醒
+	事物卡片（Issue）
+		：发现代码bug，但是没有成型代码（与Pull request的区别），需要讨论时用
+
+	GitHub主页
+		：账号创建成功后，点击“小猫图标”，左边显示自己的项目，右边显示自己的收藏和关注更新提醒
+	仓库主页
+		：点击某个仓库名后，显示项目信息，如：项目代码，commits(提交次数)，被关注、收藏情况，等
+	个人主页
+		：个人信息，如：头像，简介，我的关注信息，等
+
+
+	sign in ：登录
+	sign up：注册
+
+
+本地Git仓库基础设置
+
+	0.下载安装Git
+		
+	1.设置账户名字和邮箱并查看
+		git config –global user.name “HL2222”
+		git config –global user.email “邮箱”
+		git config --list
+
+	2.初始化一个本地文件仓库名字为testhl（Repository）
+		mkdir testhl
+		cd testhl
+		git init				//会显示生成了一个.git文件
+
+	3.向本地仓库中添加、修改、删除文件aa.java，三步
+		touch aa.java
+		vi aa.java
+		rm –rf aa.java			//
+			
+		git status				//查看文件装填
+
+		git add aa.java			//添加到暂存区
+
+		git commit –m “描述信息”		//添加到本地仓库
+
+
+管理远程Git仓库
+
+	目的：备份，实现代码的集中管理，共享代码
+	
+	1.先进入到工作区克隆代码到本地，添加用户名和密码
+		git clone 仓库地址 [给仓库起一个别名]
+		将.git文件中的config文件中
+		url = https://github.com/HL2222/hello-world.git		添加 用户名:密码@ 改为如下
+		url = https://用户名:密码@github.com/HL2222/hello-world.git
+		
+	2.修改，提交到暂存区、本地仓库三步
+		
+	3.提交到远程仓库
+		git push
+		
+	4.更新本地仓库
+		git pull
+
