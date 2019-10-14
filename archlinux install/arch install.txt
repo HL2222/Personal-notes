@@ -1,0 +1,147 @@
+
+//安装系统思路：
+//因为当前处于sr0设备中，需要对目标设备sda进行分区、格式化，
+//然后挂载到当前设备，装基本系统到/，建立UUID分区表
+//再进入有装好的系统的设备，安装网络和grub，配置一些必要项
+//最后退出到sr0设备中，反挂载系统，reboot即可进入新系统。
+https://wiki.archlinux.org/index.php/Installation_guide_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)#%E6%97%B6%E5%8C%BA
+
+内存：3G =3072M
+硬盘：30G	/boot	:200M
+		/swap	:1G
+		/	:20G
+		/home	:(8.8G)
+
+#0、查看电脑是UEFI还是BIOS启动
+ls /sys/firmware/efi
+
+#1、测试网络通畅、保证时间同步
+ping www.baidu.com
+timedatectl set-ntp true
+##没网可使用WiFi或有线联网
+#wifi-menu
+
+#2、给硬盘分区、格式化、挂载、装基本系统、建立UUID的分区表
+##2.1查看设备、分区
+lsblk
+fdisk /dev/sda
+p
+m
+
+n
+p
+1
+回车
++200M	#boot
+p
+
+n
+p
+2
+回车
++1G	#swap
+p
+
+n
+p
+3
+回车
++20G	#/
+p
+
+n
+p
+4
+回车
+回车	#/home
+p
+
+w
+
+##2.2格式化
+lsblk
+mkfs.ext4 /dev/sda1
+mkfs.ext4 /dev/sda3
+mkfs.ext4 /dev/sda4
+mkswap /dev/sda2
+
+##2.3挂载
+swapon /dev/sda2
+lsblk
+mount /dev/sda3 /mnt		lsblk
+mkdir /mnt/home
+mkdir /mnt/boot			ls /mnt
+mount /dev/sda4 /mnt/home
+mount /dev/sda1 /mnt/boot
+lsblk
+
+
+##2.4.0换国内源
+
+##2.4.1安装基本系统
+pacstrap /mnt base base-devel vim	1G
+
+##2.5查看、建立UUID分区表
+genfstab /mnt
+genfstab -U /mnt
+genfstab -U /mnt >> /mnt/etc/fstab
+vim /mnt/etc/fstab			:q!
+
+#3、进入系统，安装网络管理和grub，必要的配置
+##3.1进入刚刚安装好的系统，像cd命令
+arch-chroot /mnt
+ls
+vim /etc/fstab			:q!
+
+##3.2安装网络管理，并设置开机自启
+pacman -S networkmanager
+systemctl enable NetworkManager
+	# systemctl start	服务名	（启动一项服务）
+	# systemctl stop	服务名	（停止一项服务）
+	# systemctl enable	服务名	（开机启动一项服务）
+	# systemctl disable	服务名	（取消开机启动一项服务）
+
+##3.3安装grub
+pacman -S grub
+grub-install --target=i386-pc /dev/sda
+grub-mkconfig -o /boot/grub/grub.cfg
+
+##3.4必要的简单配置
+
+###3.4.1本地化设置--编辑两个文件locale.gen，locale.conf
+vim /etc/locale.gen
+反注释
+en_US.UTF-8 UTF-8		#176	ngg 或者 nG
+zh_CN.UTF-8 UTF-8		#498
+退出保存（倒数几行）
+locale-gen
+locale -a
+
+###3.4.2本地化英文设置--使用zh_CN.UTF-8会出现乱码，后面再使用中文
+vim /etc/locale.conf	
+LANG=en_US.UTF-8
+#LANG=zh_CN.UTF-8		:wq
+
+###3.4.3设置时区
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+###3.4.4设置root账户密码
+passwd
+
+###3.4.5设置主机名
+echo arch > /etc/hostname
+
+#4、退出系统，反挂载，重启以root用户登录
+exit
+lsblk
+umount -R /mnt
+lsblk
+shutdown now
+
+#删除arch.iso，选择自动
+
+
+
+
+
+

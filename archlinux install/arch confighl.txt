@@ -1,0 +1,246 @@
+
+#1、安装中文图形界面kde
+##1.1创建hl用户，配置sudo
+###1.1.1创建hl用户并添加到wheel组，创建密码，可以试试重启以hl登陆
+useradd -m -G wheel hl
+passwd hl
+###删除hl用户命令
+# userdel -r hl
+
+//默认可以通过 su 回车 切换到root用户，在exit退回hl用户
+//如果想用sudo pacman -S xxx，需配置sudo
+##1.2配置sudo
+visudo
+反注释 # %wheel ALL=(ALL) ALL	:wq
+
+##1.3安装 显卡驱动
+pacman -S xf86-video-vmware
+	# pacman -S xf86-video-vesa		# 默认，无图形2D、3D加速
+	# pacman -S xf86-video-intel		# intel
+	# pacman -S xf86-video-ati		# amd
+
+	###查看显卡类型
+	# lspci | grep VGA
+	###查看驱动型号
+	# pacman -Ss xf86-video
+
+##1.4安装完整的开源图形显示 X窗服务
+pacman -S xorg
+
+##1.5安装完整的 桌面环境KDE(Plasma)
+pacman -S plasma kde-applications
+
+##1.6安装完整(桌面)显示 管理器sddm及其配置管理包sddm-kcm，设置开机自启
+pacman -S sddm sddm-kcm
+systemctl enable sddm
+
+##1.7配置中文环境
+###1.7.1改回本地化中文设置
+vim /etc/locale.conf	
+#LANG=en_US.UTF-8
+LANG=zh_CN.UTF-8		:wq
+
+###1.7.2安装官方源中的中文字体
+pacman -S noto-fonts-cjk
+
+###1.7.3安装小企鹅中文输入法，图形界面设置工具
+vim /etc/pacman.d/mirrorlist
+Server = http://mirrors.163.com/archlinux/$repo/os/$arch 
+
+vim /etc/pacman.conf
+[archlinuxcn]
+Server = https://cdn.repo.archlinuxcn.org/$arch
+
+pacman -Sy
+pacman -S archlinuxcn-keyring
+pacman -S fcitx-im fcitx-configtool fcitx-gtk2 fcitx-gtk3 fcitx-qt4 fcitx-qt5 libidn fcitx-sogoupinyin 
+#fcitx-googlepinyin
+
+vim /home/hl/.xprofile
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS="@im=fcitx"	:wq
+
+reboot
+
+##1.8安装vmware-tools包，可以共用剪切板，拖拽文件，共享目录
+###1.8.1安装vmware-tools包
+pacman -S open-vm-tools gtkmm gtkmm3
+
+###1.8.2修复Tools中的60秒BUG
+vim /usr/lib/systemd/system/vmtoolsd.service
+ 在[service]项的后面增加一行    KillSignal=SIGKILL		:wq
+
+###1.8.3设置vmware tools开机自启动
+cat /proc/version > /etc/arch-release
+systemctl start vmtoolsd
+systemctl enable vmtoolsd
+
+##1.9重启后右键点桌面键盘图标“配置当前输入法”
+##1.9配置kate中文字体，"设置"->"配置kate"->"字体和颜色"->"有衬线字体，15字号"
+##1.9重启后点击虚拟机，"查看"->"自动调整大小"->"自动适应客户机"
+reboot
+
+
+#2、安装中国版火狐浏览器同步账号
+##2.1安装国际版火狐浏览器
+su
+pacman -S firefox
+##2.2去网址http://www.firefox.com.cn/download/	    下载中国版Firefox
+##2.3卸载原来Firefox
+pacman -R firefox
+cd /home/hl/Download
+tar -jxvf Firefox-latest-x86_64.tar.bz2 
+mv firefox /opt
+ln -s /opt/firefox/firefox /usr/bin/firefox
+cd /usr/share/applications
+vim firefox.desktop
+
+[Desktop Entry]
+Name=firefox
+Comment=firefox
+Exec=/opt/firefox/firefox
+Icon=/opt/firefox/browser/chrome/icons/default/default128.png
+Terminal=false
+Type=Application
+Categories=Application;
+Encoding=UTF-8
+StartupNotify=true
+
+##2.4重启后登录火狐账号同步
+reboot
+
+
+#3、配置终端
+##3.1设置新的knosole默认配置方案bashhl--字体，颜色，大小，背景图，透明度，边框
+
+##3.2安装zsh，并设置为默认shell
+su
+pacman -S zsh
+chsh -s  $(which zsh	) root	#设置root用户默认shell为zsh，重新登录终端有效
+	# chsh -s  $(which zsh) hl	#设置  hl  用户默认shell为zsh，log out有效
+	# chsh -s  $(which zsh)	#设置当前用户默认shell为zsh，
+	# 注销，重新登录桌面
+	# 1  2  1  0
+
+##3.3安装oh my zsh，并配置
+###3.3.1安装基本工具git wget curl
+pacman -S git wget curl
+###卸载oh my zsh
+###在卸载zsh 之前请先更换默认终端。
+###chsh -s /bin/bash user
+
+###3.3.2火狐登录oh my zsh官网，找到wget 下载命令，复制进终端安装
+sh -c "$(wget -O- https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+
+###3.3.3配置oh my zsh主题为xxx，或使用默认主题，常用 tonotdo，，，
+vim ~/.zshrc
+ZSH_THEME="xxx"		:wq
+
+##3.4安装powerline，并配置？？？？
+
+
+#4、配置软件开发环境
+##4.1配置vim中tab自动缩进4字符
+vim /etc/vimrc
+set tabstop=4	#按一次tab前进4字符
+set softtabstop=4	#用空格代替tab
+set expandtab	#设置自动缩进
+set shiftwidth=4	#设置多行缩进
+set number	#设置显示行号
+
+
+
+##安装java，
+下载jdk,
+mv jdk12.0.2 /opt/
+vim /etc/profile
+#Java Env
+export JAVA_HOME=/opt/jdk12.0.2
+export PATH=$PATH:$JAVA_HOME/bin
+
+source /etc/profile
+javac
+
+
+
+##4.2安装配置python机器学习环境
+###系统默认已安装python
+# pacman -S python pyhon2
+###4.2.1安装python-pip
+pacman -S python-pip python2-pip
+
+###4.2.2安装spyder IDE
+pacman -S spyder spyder3
+
+###查看pip版本
+# pip -V
+# pip2 -V
+
+###
+
+安装rar
+pacman -S unrar
+unrar x 源文件位置 目标位置
+
+安装办公软件打开ppt，word        libreoffice // openoffice
+pacman -S libreoffice
+
+
+安装tim
+在aur官网搜索tim tencent,我们可以看到三个包，这里我们安装deepin-wine-tim,其实这个资源也是对wine-tim的包装，这还是在解决安装tim的时候发现的。
+vim /etc/pacman.conf
+
+pacman -Sy
+pacman -S yaourt
+
+使用文本编辑器打开/etc/pacman.conf，找到
+#[multilib]
+#Include = /etc/pacman.d/mirrorlist
+将之修改为
+[multilib]
+Include = /etc/pacman.d/mirrorlist
+
+而后
+pacman -Syyu
+
+ctl + d
+yaourt -S deepin-wine-tim
+
+默认位置安装之后
+修改字体大小
+env WINEPREFIX="$HOME/.deepinwine/Deepin-TIM" winecfg
+->显示->
+
+
+#5、常用配置
+##安装Yaourt包管理器
+vim /etc/pacman.conf
+在文件结尾加上如下内容;
+[archlinuxcn]
+SigLevel = Optional TrustedOnly
+Server   =  http://repo.archlinuxcn.org/$arch   :wq
+pacman -Syu yaourt fakeroot
+
+###滚动更新命令使用yay非常简单：
+#yay -Syu
+
+#如何使用Yaourtpro
+
+##查看电脑IP
+ip addr
+
+修改子文件权限
+chmod -R 777 /home
+
+
+
+
+
+
+
+
+
+
+
+

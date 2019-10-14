@@ -1,0 +1,189 @@
+
+
+ls /sys/firmware/efi
+
+ping www.baidu.com
+wifi-menu
+ping www.baidu.com
+timedatectl set-ntp true
+
+lsblk
+cfdisk /dev/sda1
+#gpt
+new -> 512M 	#uefi分区
+new -> 25G	#/
+new		#/home
+write -> yes -> quit
+lsblk
+
+mkfs.fat -F32 /dev/sda1
+mkfs.ext4 /dev/sda2
+mkfs.ext4 /dev/sda3
+mount /dev/sda2 /mnt
+mkdir /mnt/home
+mount /dev/sda3 /mnt/home
+lsblk
+
+
+##2.4.0换国内源
+
+##2.4.1安装基本系统
+pacstrap /mnt base base-devel vim	1G			pacstrap -i /mnt base base-devel vim
+
+##2.5查看、建立UUID分区表
+genfstab -U -p /mnt >> /mnt/etc/fstab
+vim /mnt/etc/fstab			:q!
+
+#3、进入系统，安装网络管理和grub，必要的配置
+##3.1进入刚刚安装好的系统，像cd命令
+arch-chroot /mnt						arch-chroot /mnt /bin/bash
+ls
+vim /etc/fstab			:q!
+
+##3.2安装网络管理，并设置开机自启
+#pacman -S iw wpa_supplicant dialog
+pacman -S networkmanager
+systemctl enable NetworkManager
+	# systemctl start	服务名	（启动一项服务）
+	# systemctl stop	服务名	（停止一项服务）
+	# systemctl enable	服务名	（开机启动一项服务）
+	# systemctl disable	服务名	（取消开机启动一项服务）
+
+##3.3安装grub
+pacman -S grub efibootmgr
+mkdir /boot/efi
+mount /dev/sda1 /boot/efi
+lsblk
+grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi
+grub-mkconfig -o /boot/grub/grub.cfg
+
+mkdir /boot/efi/EFI/BOOT
+cp /boot/efi/EFI/GRUB/grubx64.efi /boot/efi/EFI/BOOT/BOOTX64.EFI
+vim /boot/efi/startup
+	bcf boot add 1 fs0:\EFI\GRUB\grubx64.efi "My bootloader"
+	exit
+
+##3.4必要的简单配置
+
+###3.4.1本地化设置--编辑两个文件locale.gen，locale.conf
+vim /etc/locale.gen
+反注释
+en_US.UTF-8 UTF-8		#176	ngg 或者 nG
+zh_CN.UTF-8 UTF-8		#498
+退出保存（倒数几行）
+locale-gen
+locale -a
+
+###3.4.2本地化英文设置--使用zh_CN.UTF-8会出现乱码，后面再使用中文
+vim /etc/locale.conf	
+LANG=en_US.UTF-8
+#LANG=zh_CN.UTF-8		:wq
+
+###3.4.3设置时区
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+###3.4.4设置root账户密码
+passwd
+
+###3.4.5设置主机名
+echo arch > /etc/hostname
+
+#4、退出系统，反挂载，重启以root用户登录
+exit
+lsblk
+umount -R /mnt	######
+lsblk
+
+
+
+
+
+
+
+tar -jxvf Firefox-latest-x86_64.tar.bz2 
+mv firefox /opt
+ln -s /opt/firefox/firefox /usr/bin/firefox
+cd /usr/share/applications
+vim firefox.desktop
+
+[Desktop Entry]
+Name=firefox
+Comment=firefox
+Exec=/opt/firefox/firefox
+Icon=/opt/firefox/browser/chrome/icons/default/default128.png
+Terminal=false
+Type=Application
+Categories=Application;
+Encoding=UTF-8
+StartupNotify=true
+
+reboot
+
+
+mv jdk12.0.2 /opt/
+vim /etc/profile
+#Java Env
+export JAVA_HOME=/opt/jdk12.0.2
+export PATH=$PATH:$JAVA_HOME/bin
+
+source /etc/profile
+javac
+
+
+vim /etc/pacman.d/mirrorlist
+Server = http://mirrors.163.com/archlinux/$repo/os/$arch 
+vim /etc/pacman.conf
+[archlinuxcn]
+#Server = https://cdn.repo.archlinuxcn.org/$arch
+
+pacman -Sy
+pacman -S archlinuxcn-keyring
+pacman -S fcitx-im fcitx-configtool fcitx-gtk2 fcitx-gtk3 fcitx-qt4 fcitx-qt5 libidn fcitx-sogoupinyin 
+#fcitx-googlepinyin
+
+vim /home/hl/.xprofile
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS="@im=fcitx"
+reboot
+
+
+安装rar
+pacman -S unrar
+unrar x 源文件位置 目标位置
+
+安装办公软件打开ppt，word        libreoffice // openoffice
+pacman -S libreoffice
+
+安装，打开mp4
+
+
+安装tim
+在aur官网搜索tim tencent,我们可以看到三个包，这里我们安装deepin-wine-tim,其实这个资源也是对wine-tim的包装，这还是在解决安装tim的时候发现的。
+vim /etc/pacman.conf
+
+pacman -Sy
+pacman -S yaourt
+
+使用文本编辑器打开/etc/pacman.conf，找到
+#[multilib]
+#Include = /etc/pacman.d/mirrorlist
+将之修改为
+[multilib]
+Include = /etc/pacman.d/mirrorlist
+
+而后
+pacman -Syyu
+
+ctl + d
+yaourt -S deepin-wine-tim
+
+默认位置安装之后
+修改字体大小
+env WINEPREFIX="$HOME/.deepinwine/Deepin-TIM" winecfg
+->显示->
+
+
+修改子文件权限
+chmod -R 777 /home
+
