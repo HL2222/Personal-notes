@@ -72,3 +72,29 @@ Github基本名词解释
 	4.更新本地仓库
 		git pull
 
+
+分支管理
+
+	目的：互相独立开发，多人合作推进进度
+
+	git status		//查看当前状态
+	//创建分支名为fenzhi，合并到主分支master
+	1.创建分支
+		git branch fenzhi
+
+	2.查看分支
+		git branch –v 
+
+	3.切换分支
+		git checkout fenzhi
+
+	4.合并分支
+		切换到接受合并的分支（一般为master分支）
+		git checkout master
+
+		执行merge 要合并的分支
+		git merge fenzhi
+
+	5.解决冲突
+
+
