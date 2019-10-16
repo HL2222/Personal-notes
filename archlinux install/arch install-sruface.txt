@@ -10,7 +10,7 @@ timedatectl set-ntp true
 lsblk
 cfdisk /dev/sda1
 #gpt
-new -> 512M 	#uefi����
+new -> 512M 	#uefi分区
 new -> 25G	#/
 new		#/home
 write -> yes -> quit
@@ -25,31 +25,31 @@ mount /dev/sda3 /mnt/home
 lsblk
 
 
-##2.4.0������Դ
+##2.4.0换国内源
 
-##2.4.1��װ����ϵͳ
+##2.4.1安装基本系统
 pacstrap /mnt base base-devel vim	1G			pacstrap -i /mnt base base-devel vim
 
-##2.5�鿴������UUID������
+##2.5查看、建立UUID分区表
 genfstab -U -p /mnt >> /mnt/etc/fstab
 vim /mnt/etc/fstab			:q!
 
-#3������ϵͳ����װ���������grub����Ҫ������
-##3.1����ոհ�װ�õ�ϵͳ����cd����
+#3、进入系统，安装网络管理和grub，必要的配置
+##3.1进入刚刚安装好的系统，像cd命令
 arch-chroot /mnt						arch-chroot /mnt /bin/bash
 ls
 vim /etc/fstab			:q!
 
-##3.2��װ��������������ÿ�������
+##3.2安装网络管理，并设置开机自启
 #pacman -S iw wpa_supplicant dialog
 pacman -S networkmanager
 systemctl enable NetworkManager
-	# systemctl start	������	������һ�����
-	# systemctl stop	������	��ֹͣһ�����
-	# systemctl enable	������	����������һ�����
-	# systemctl disable	������	��ȡ����������һ�����
+	# systemctl start	服务名	（启动一项服务）
+	# systemctl stop	服务名	（停止一项服务）
+	# systemctl enable	服务名	（开机启动一项服务）
+	# systemctl disable	服务名	（取消开机启动一项服务）
 
-##3.3��װgrub
+##3.3安装grub
 pacman -S grub efibootmgr
 mkdir /boot/efi
 mount /dev/sda1 /boot/efi
@@ -63,39 +63,44 @@ vim /boot/efi/startup
 	bcf boot add 1 fs0:\EFI\GRUB\grubx64.efi "My bootloader"
 	exit
 
-##3.4��Ҫ�ļ�����
+##3.4必要的简单配置
 
-###3.4.1���ػ�����--�༭�����ļ�locale.gen��locale.conf
+###3.4.1本地化设置--编辑两个文件locale.gen，locale.conf
 vim /etc/locale.gen
-��ע��
-en_US.UTF-8 UTF-8		#176	ngg ���� nG
+反注释
+en_US.UTF-8 UTF-8		#176	ngg 或者 nG
 zh_CN.UTF-8 UTF-8		#498
-�˳����棨�������У�
+退出保存（倒数几行）
 locale-gen
 locale -a
 
-###3.4.2���ػ�Ӣ������--ʹ��zh_CN.UTF-8��������룬������ʹ������
+###3.4.2本地化英文设置--使用zh_CN.UTF-8会出现乱码，后面再使用中文
 vim /etc/locale.conf	
 LANG=en_US.UTF-8
 #LANG=zh_CN.UTF-8		:wq
 
-###3.4.3����ʱ��
+###3.4.3设置时区
 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-###3.4.4����root�˻�����
+###3.4.4设置root账户密码
 passwd
 
-###3.4.5����������
+###3.4.5设置主机名
 echo arch > /etc/hostname
 
-#4���˳�ϵͳ�������أ�������root�û���¼
+#4、退出系统，反挂载，重启以root用户登录
 exit
 lsblk
 umount -R /mnt	######
 lsblk
 
 
-
+#5开机优化设置
+（1）关闭开机时5秒等待：修改 /boot/grub/grub.cfg	timeout 改成 0
+（2）关闭开机挂掉的服务启动项：
+	systemd-analyze blame			//具体开机时间
+	systemctl --all | grep not-found	//查看出错启动项
+	systemctl mask plymouth-start.service	//关闭出错启动项（以 plymouth-start.service 为例）
 
 
 
@@ -148,42 +153,42 @@ export XMODIFIERS="@im=fcitx"
 reboot
 
 
-��װrar
+安装rar
 pacman -S unrar
-unrar x Դ�ļ�λ�� Ŀ��λ��
+unrar x 源文件位置 目标位置
 
-��װ�칫������ppt��word        libreoffice // openoffice
+安装办公软件打开ppt，word        libreoffice // openoffice
 pacman -S libreoffice
 
-��װ����mp4
+安装，打开mp4
 
 
-��װtim
-��aur��������tim tencent,���ǿ��Կ������������������ǰ�װdeepin-wine-tim,��ʵ�����ԴҲ�Ƕ�wine-tim�İ�װ���⻹���ڽ����װtim��ʱ���ֵġ�
+安装tim
+在aur官网搜索tim tencent,我们可以看到三个包，这里我们安装deepin-wine-tim,其实这个资源也是对wine-tim的包装，这还是在解决安装tim的时候发现的。
 vim /etc/pacman.conf
 
 pacman -Sy
 pacman -S yaourt
 
-ʹ���ı��༭����/etc/pacman.conf���ҵ�
+使用文本编辑器打开/etc/pacman.conf，找到
 #[multilib]
 #Include = /etc/pacman.d/mirrorlist
-��֮�޸�Ϊ
+将之修改为
 [multilib]
 Include = /etc/pacman.d/mirrorlist
 
-����
+而后
 pacman -Syyu
 
 ctl + d
 yaourt -S deepin-wine-tim
 
-Ĭ��λ�ð�װ֮��
-�޸������С
+默认位置安装之后
+修改字体大小
 env WINEPREFIX="$HOME/.deepinwine/Deepin-TIM" winecfg
-->��ʾ->
+->显示->
 
 
-�޸����ļ�Ȩ��
+修改子文件权限
 chmod -R 777 /home
 
